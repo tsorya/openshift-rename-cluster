@@ -4,6 +4,7 @@
     kind: Secret
     name: api-secret
     namespace: openshift-config
+    validate_certs: false
   register: api_secret
   until: api_secret is not failed
 
