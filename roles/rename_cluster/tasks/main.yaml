@@ -1,0 +1,57 @@
+- name: Generate an OpenSSL private key
+  community.crypto.openssl_privatekey_pipe:
+    type: RSA
+  register: privatekey
+  no_log: true
+
+- name: Create certificate signing request (CSR) for new certificate
+  community.crypto.openssl_csr_pipe:
+    privatekey_content: "{{ privatekey.privatekey }}"
+    common_name: "{{ 'api.' + domain }}"
+    subject_alt_name:
+      - "DNS:{{ 'api.' + domain }}"
+  register: csr
+
+- name: Create certificate
+  community.crypto.x509_certificate_pipe:
+    privatekey_content: "{{ privatekey.privatekey }}"
+    csr_content: "{{ csr.csr }}"
+    provider: selfsigned
+  register: certificate
+
+- name: Create Secret
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Secret
+      type: kubernetes.io/tls
+      metadata:
+        name: api-secret
+        namespace: openshift-config
+      data:
+        tls.crt: "{{ certificate.certificate | b64encode }}"
+        tls.key: "{{ privatekey.privatekey | b64encode }}"
+    apply: true
+    validate_certs: false
+    state: present
+  register: k8s_result
+  until: k8s_result is not failed
+
+- name: Patch API server
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: config.openshift.io/v1
+      kind: APIServer
+      metadata:
+        name: cluster
+      spec:
+        servingCerts:
+          namedCertificates:
+            - names:
+                - "{{ 'api.' + domain }}"
+              servingCertificate:
+                name: api-secret
+    validate_certs: false
+    state: present
+  register: k8s_result
+  until: k8s_result is not failed
