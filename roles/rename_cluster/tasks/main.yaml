@@ -1,3 +1,16 @@
+- name: Check for existing secret
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: api-secret
+    namespace: openshift-config
+  register: api_secret
+  until: api_secret is not failed
+
+- name: End playbook
+  when: api_secret.resources | length | int > 0
+  ansible.builtin.meta: end_play
+
 - name: Generate an OpenSSL private key
   community.crypto.openssl_privatekey_pipe:
     type: RSA
