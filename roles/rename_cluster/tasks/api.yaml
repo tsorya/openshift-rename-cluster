@@ -41,3 +41,19 @@
     - name: Update certificate authority in kubeconfig # noqa: no-handler
       when: cert_secret.changed
       ansible.builtin.command: oc config set clusters.{{ cluster_name.stdout }}.certificate-authority-data "{{ certificate.certificate | b64encode }}"
+
+    - name: Pause for 30 seconds to wait for API server to progress
+      ansible.builtin.pause:
+        seconds: 30
+
+    - name: Wait for API server to be online
+      kubernetes.core.k8s_info:
+        api_version: config.openshift.io/v1
+        kind: ClusterOperator
+        name: kube-apiserver
+        wait: true
+        wait_condition:
+          type: Progressing
+          status: "False"
+        wait_sleep: 10
+        wait_timeout: 600
