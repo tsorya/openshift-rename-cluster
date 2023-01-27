@@ -48,8 +48,8 @@
     apply: true
     validate_certs: false
     state: present
-  register: k8s_result
-  until: k8s_result is not failed
+  register: api_secret
+  until: api_secret is not failed
 
 - name: Patch API server
   kubernetes.core.k8s:
@@ -71,8 +71,10 @@
   until: k8s_result is not failed
 
 - name: Get current cluster name
+  when: api_secret.changed
   ansible.builtin.command: oc config view -o jsonpath='{.contexts[].context.cluster}'
   register: cluster_name
 
 - name: Update certificate authority in kubeconfig
+  when: api_secret.changed
   ansible.builtin.command: oc config set clusters.{{ cluster_name.stdout }}.certificate-authority-data "{{ certificate.certificate | b64encode }}"
