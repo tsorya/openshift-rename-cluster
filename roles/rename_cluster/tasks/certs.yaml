@@ -1,0 +1,38 @@
+- name: Generate an OpenSSL private key
+  community.crypto.openssl_privatekey_pipe:
+    type: RSA
+  register: privatekey
+  no_log: true
+
+- name: Create certificate signing request (CSR) for new certificate
+  community.crypto.openssl_csr_pipe:
+    privatekey_content: "{{ privatekey.privatekey }}"
+    common_name: "{{ prefix + '.' + domain }}"
+    subject_alt_name:
+      - "DNS:{{ prefix + '.' + domain }}"
+  register: csr
+
+- name: Create certificate
+  community.crypto.x509_certificate_pipe:
+    privatekey_content: "{{ privatekey.privatekey }}"
+    csr_content: "{{ csr.csr }}"
+    provider: selfsigned
+  register: certificate
+
+- name: Create Secret
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Secret
+      type: kubernetes.io/tls
+      metadata:
+        name: "{{ secret_name }}"
+        namespace: "{{ secret_namespace }}"
+      data:
+        tls.crt: "{{ certificate.certificate | b64encode }}"
+        tls.key: "{{ privatekey.privatekey | b64encode }}"
+    apply: true
+    validate_certs: false
+    state: present
+  register: cert_secret
+  until: cert_secret is not failed
