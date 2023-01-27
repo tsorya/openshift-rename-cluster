@@ -16,7 +16,8 @@
       vars:
         prefix: "api"
         type: "api"
-        secret_namespace: "openshift-config"
+        secret_namespace:
+          - "openshift-config"
 
     - name: Patch API server
       kubernetes.core.k8s:

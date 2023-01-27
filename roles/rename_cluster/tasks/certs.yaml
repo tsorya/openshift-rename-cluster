@@ -20,6 +20,7 @@
   register: certificate
 
 - name: Create Secret
+  loop: "{{ secret_namespace }}"
   kubernetes.core.k8s:
     definition:
       apiVersion: v1
@@ -27,7 +28,7 @@
       type: kubernetes.io/tls
       metadata:
         name: "{{ type + '-secret' }}"
-        namespace: "{{ secret_namespace }}"
+        namespace: "{{ item }}"
       data:
         tls.crt: "{{ certificate.certificate | b64encode }}"
         tls.key: "{{ privatekey.privatekey | b64encode }}"

@@ -15,9 +15,26 @@
       vars:
         prefix: "*.apps"
         type: "ingress"
-        secret_namespace: "openshift-config"
+        secret_namespace:
+          - "openshift-config"
+          - "openshift-ingress"
 
     - name: Patch Ingress Controller
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: operator.openshift.io/v1
+          kind: IngressController
+          metadata:
+            name: default
+            namespace: openshift-ingress-operator
+          spec:
+            defaultCertificate:
+              name: ingress-secret
+        state: present
+      register: k8s_result
+      until: k8s_result is not failed
+
+    - name: Patch Ingress
       kubernetes.core.k8s:
         definition:
           apiVersion: config.openshift.io/v1
@@ -25,6 +42,7 @@
           metadata:
             name: cluster
           spec:
+            appsDomain: "{{ 'apps.' + domain }}"
             componentRoutes:
               - hostname: "{{ 'console-openshift-console.apps.' + domain }}"
                 name: console
