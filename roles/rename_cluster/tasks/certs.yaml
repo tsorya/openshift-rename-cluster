@@ -26,7 +26,7 @@
       kind: Secret
       type: kubernetes.io/tls
       metadata:
-        name: "{{ prefix + '-secret' }}"
+        name: "{{ type + '-secret' }}"
         namespace: "{{ secret_namespace }}"
       data:
         tls.crt: "{{ certificate.certificate | b64encode }}"

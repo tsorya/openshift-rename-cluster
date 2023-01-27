@@ -15,6 +15,7 @@
       ansible.builtin.include_tasks: certs.yaml
       vars:
         prefix: "api"
+        type: "api"
         secret_namespace: "openshift-config"
 
     - name: Patch API server

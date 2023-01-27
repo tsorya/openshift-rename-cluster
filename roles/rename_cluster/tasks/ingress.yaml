@@ -3,7 +3,7 @@
     api_version: v1
     kind: Secret
     name: ingress-secret
-    namespace: openshift-ingress
+    namespace: openshift-config
     validate_certs: false
   register: current_secret
   until: current_secret is not failed
@@ -14,21 +14,29 @@
     - name: Create certificate
       ansible.builtin.include_tasks: certs.yaml
       vars:
-        prefix: "ingress"
-        secret_namespace: "openshift-ingress"
+        prefix: "*.apps"
+        type: "ingress"
+        secret_namespace: "openshift-config"
 
     - name: Patch Ingress Controller
       kubernetes.core.k8s:
         definition:
-          apiVersion: operator.openshift.io/v1
-          kind: IngressController
+          apiVersion: config.openshift.io/v1
+          kind: Ingress
           metadata:
-            name: default
-            namespace: openshift-ingress-operator
+            name: cluster
           spec:
-            domain: "{{ 'apps.' + domain }}"
-            defaultCertificate:
-              name: "ingress-secret"
+            componentRoutes:
+              - hostname: "{{ 'console-openshift-console.apps.' + domain }}"
+                name: console
+                namespace: openshift-console
+                servingCertKeyPairSecret:
+                  name: ingress-secret
+              - hostname: "{{ 'oauth-openshift.apps.' + domain }}"
+                name: oauth-openshift
+                namespace: openshift-authentication
+                servingCertKeyPairSecret:
+                  name: ingress-secret
         validate_certs: false
         state: present
       register: k8s_result
