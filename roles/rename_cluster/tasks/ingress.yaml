@@ -92,21 +92,23 @@
       register: k8s_result
       until: k8s_result is not failed
 
-    - name: Get list of namespaces
+    - name: Get list of routes
       kubernetes.core.k8s_info:
-        api_version: v1
-        kind: Namespace
-      register: namespaces
-      until: namespaces is not failed
+        api_version: route.openshift.io/v1
+        kind: Route
+      register: routes
+      until: routes is not failed
 
     - name: Delete routes
-      loop: "{{ namespaces.resources }}"
+      loop: "{{ routes.resources }}"
+      when: item['metadata']['namespace'].startswith("openshift-")
       kubernetes.core.k8s:
         definition:
           apiVersion: route.openshift.io/v1
           kind: Route
           metadata:
-            namespace: "{{ item.metadata.name }}"
+            name: "{{ item.metadata.name }}"
+            namespace: "{{ item.metadata.namespace }}"
         state: absent
         wait: true
         wait_timeout: 1200
