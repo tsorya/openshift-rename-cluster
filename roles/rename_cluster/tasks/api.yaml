@@ -1,0 +1,42 @@
+- name: Check for existing secret
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: api-secret
+    namespace: openshift-config
+    validate_certs: false
+  register: current_secret
+  until: current_secret is not failed
+
+- name: Update API server
+  when: current_secret.resources | length | int == 0
+  block:
+    - name: Create certificate
+      ansible.builtin.include_tasks: certs.yaml
+      vars:
+        prefix: "api"
+        secret_name: "api-secret"
+        secret_namespace: "openshift-config"
+
+    - name: Patch API server
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: config.openshift.io/v1
+          kind: APIServer
+          metadata:
+            name: cluster
+          spec:
+            servingCerts:
+              namedCertificates:
+                - names:
+                    - "{{ 'api.' + domain }}"
+                  servingCertificate:
+                    name: api-secret
+        validate_certs: false
+        state: present
+      register: k8s_result
+      until: k8s_result is not failed
+
+    - name: Update certificate authority in kubeconfig # noqa: no-handler
+      when: cert_secret.changed
+      ansible.builtin.command: oc config set clusters.{{ cluster_name.stdout }}.certificate-authority-data "{{ certificate.certificate | b64encode }}"
