@@ -1,0 +1,35 @@
+- name: Check for existing secret
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: ingress-secret
+    namespace: openshift-ingress
+    validate_certs: false
+  register: current_secret
+  until: current_secret is not failed
+
+- name: Update Ingress
+  when: current_secret.resources | length | int == 0
+  block:
+    - name: Create certificate
+      ansible.builtin.include_tasks: certs.yaml
+      vars:
+        prefix: "ingress"
+        secret_namespace: "openshift-ingress"
+
+    - name: Patch Ingress Controller
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: operator.openshift.io/v1
+          kind: IngressController
+          metadata:
+            name: default
+            namespace: openshift-ingress-operator
+          spec:
+            domain: "{{ 'apps.' + domain }}"
+            defaultCertificate:
+              name: "ingress-secret"
+        validate_certs: false
+        state: present
+      register: k8s_result
+      until: k8s_result is not failed
