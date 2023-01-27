@@ -110,6 +110,8 @@
     # this deletes other Routes (openshift-monitoring for instance) so that they can be re-created with the new domain
     - name: Delete routes
       loop: "{{ routes.resources }}"
+      loop_control:
+        label: "{{ item.metadata.name }}"
       when: item['metadata']['namespace'].startswith("openshift-")
       kubernetes.core.k8s:
         definition:
