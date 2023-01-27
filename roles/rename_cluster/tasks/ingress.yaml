@@ -19,6 +19,7 @@
           - "openshift-config"
           - "openshift-ingress"
 
+    # this updates the default certificate for Routes created in the future
     - name: Patch Ingress Controller
       kubernetes.core.k8s:
         definition:
@@ -34,6 +35,7 @@
       register: k8s_result
       until: k8s_result is not failed
 
+    # this updates the default apps domain, as well as configures the Console and OAuth endpoints
     - name: Patch Ingress
       kubernetes.core.k8s:
         definition:
@@ -105,6 +107,7 @@
       retries: 60
       delay: 20
 
+    # this deletes other Routes (openshift-monitoring for instance) so that they can be re-created with the new domain
     - name: Delete routes
       loop: "{{ routes.resources }}"
       when: item['metadata']['namespace'].startswith("openshift-")
