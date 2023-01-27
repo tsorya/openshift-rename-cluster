@@ -1,14 +1,20 @@
+- name: Get current cluster context
+  ansible.builtin.command: oc config current-context
+  register: current_context
+  changed_when: current_context.rc != 0
+
 - name: Get current cluster name
-  ansible.builtin.command: oc config view -o jsonpath='{.contexts[].context.cluster}'
+  ansible.builtin.command: oc config view -o jsonpath='{.contexts[?(@.name == "{{ current_context.stdout }}")].context.cluster}'
   register: cluster_name
   changed_when: cluster_name.rc != 0
 
-- name: Get Cluster information
-  kubernetes.core.k8s_cluster_info:
-  register: api_status
+- name: Get current cluster API URL
+  ansible.builtin.command: oc config view -o jsonpath='{.clusters[?(@.name == "{{ cluster_name.stdout }}")].cluster.server}'
+  register: cluster_url
+  changed_when: cluster_url.rc != 0
 
 - name: Update host address
-  when: api_status.connection.host != "https://api." + domain + ":6443"
+  when: cluster_url.stdout != "https://api." + domain + ":6443"
   ansible.builtin.command: oc config set clusters.{{ cluster_name.stdout }}.server "{{ 'https://api.' + domain + ':6443' }}"
 
 - name: Check for existing secret
