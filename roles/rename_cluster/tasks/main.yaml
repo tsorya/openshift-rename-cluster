@@ -17,8 +17,8 @@
   when: cluster_url.stdout != "https://api." + domain + ":6443"
   ansible.builtin.command: oc config set clusters.{{ cluster_name.stdout }}.server "{{ 'https://api.' + domain + ':6443' }}"
 
-- name: Update Ingress
-  ansible.builtin.include_tasks: ingress.yaml
-
 - name: Update API
   ansible.builtin.include_tasks: api.yaml
+
+- name: Update Ingress
+  ansible.builtin.include_tasks: ingress.yaml

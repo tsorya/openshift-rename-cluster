@@ -4,7 +4,6 @@
     kind: Secret
     name: ingress-secret
     namespace: openshift-config
-    validate_certs: false
   register: current_secret
   until: current_secret is not failed
 
@@ -37,7 +36,6 @@
                 namespace: openshift-authentication
                 servingCertKeyPairSecret:
                   name: ingress-secret
-        validate_certs: false
         state: present
       register: k8s_result
       until: k8s_result is not failed
@@ -53,7 +51,6 @@
           data:
             ca-bundle.crt: "{{ certificate.certificate }}"
         apply: true
-        validate_certs: false
         state: present
       register: k8s_result
       until: k8s_result is not failed
@@ -68,7 +65,6 @@
           spec:
             trustedCA:
               name: custom-ca
-        validate_certs: false
         state: present
       register: k8s_result
       until: k8s_result is not failed
