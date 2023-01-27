@@ -69,3 +69,10 @@
     state: present
   register: k8s_result
   until: k8s_result is not failed
+
+- name: Get current cluster name
+  ansible.builtin.command: oc config view -o jsonpath='{.contexts[].context.cluster}'
+  register: cluster_name
+
+- name: Update certificate authority in kubeconfig
+  ansible.builtin.command: oc config set clusters.{{ cluster_name.stdout }}.certificate-authority-data "{{ certificate.certificate | b64encode }}"
