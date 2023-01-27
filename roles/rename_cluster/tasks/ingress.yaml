@@ -43,17 +43,22 @@
             name: cluster
           spec:
             appsDomain: "{{ 'apps.' + domain }}"
-            componentRoutes:
-              - hostname: "{{ 'console-openshift-console.apps.' + domain }}"
-                name: console
-                namespace: openshift-console
-                servingCertKeyPairSecret:
-                  name: ingress-secret
-              - hostname: "{{ 'oauth-openshift.apps.' + domain }}"
-                name: oauth-openshift
-                namespace: openshift-authentication
-                servingCertKeyPairSecret:
-                  name: ingress-secret
+            #componentRoutes:
+            #  - hostname: "{{ 'downloads-openshift-console.apps.' + domain }}"
+            #    name: downloads
+            #    namespace: openshift-console
+            #    servingCertKeyPairSecret:
+            #      name: ingress-secret
+            #  - hostname: "{{ 'console-openshift-console.apps.' + domain }}"
+            #    name: console
+            #    namespace: openshift-console
+            #    servingCertKeyPairSecret:
+            #      name: ingress-secret
+            #  - hostname: "{{ 'oauth-openshift.apps.' + domain }}"
+            #    name: oauth-openshift
+            #    namespace: openshift-authentication
+            #    servingCertKeyPairSecret:
+            #      name: ingress-secret
         state: present
       register: k8s_result
       until: k8s_result is not failed
