@@ -1,10 +1,15 @@
+- name: Get current cluster name
+  ansible.builtin.command: oc config view -o jsonpath='{.contexts[].context.cluster}'
+  register: cluster_name
+  changed_when: cluster_name.rc != 0
+
 - name: Get Cluster information
   kubernetes.core.k8s_cluster_info:
   register: api_status
 
-- name: Print return information from the previous task
-  ansible.builtin.debug:
-    var: api_status
+- name: Update host address
+  when: api_status.connection.host != "https://api." + domain + ":6443"
+  ansible.builtin.command: oc config set clusters.{{ cluster_name.stdout }}.server "{{ 'https://api.' + domain + ':6443' }}"
 
 - name: Check for existing secret
   kubernetes.core.k8s_info:
@@ -13,11 +18,11 @@
     name: api-secret
     namespace: openshift-config
     validate_certs: false
-  register: api_secret
-  until: api_secret is not failed
+  register: current_secret
+  until: current_secret is not failed
 
 - name: Update API server
-  when: api_secret.resources | length | int == 0
+  when: current_secret.resources | length | int == 0
   block:
     - name: Generate an OpenSSL private key
       community.crypto.openssl_privatekey_pipe:
@@ -76,11 +81,6 @@
         state: present
       register: k8s_result
       until: k8s_result is not failed
-
-    - name: Get current cluster name
-      ansible.builtin.command: oc config view -o jsonpath='{.contexts[].context.cluster}'
-      register: cluster_name
-      changed_when: cluster_name.rc != 0
 
     - name: Update certificate authority in kubeconfig # noqa: no-handler
       when: api_secret.changed
