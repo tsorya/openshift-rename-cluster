@@ -1,0 +1,18 @@
+- name: Wait for certificate to update
+  block:
+    - name: Get the current API cert
+      community.crypto.get_certificate:
+        host: "{{ 'api.' + domain }}"
+        port: 6443
+      register: api_cert
+
+    - name: Check if certs match
+      when: api_cert.cert != certificate.certificate
+      ansible.builtin.fail:
+        msg: Re-checking api cert
+  rescue:
+    - name: Pause for 15 seconds
+      ansible.builtin.pause:
+        seconds: 15
+    - name: Retry check
+      ansible.builtin.include_tasks: check_api_cert.yaml
