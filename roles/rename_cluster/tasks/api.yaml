@@ -1,3 +1,5 @@
+# https://docs.openshift.com/container-platform/4.12/security/certificates/api-server.html
+
 - name: Check for existing secret
   kubernetes.core.k8s_info:
     api_version: v1
