@@ -18,7 +18,7 @@
   register: cluster_url
   changed_when: cluster_url.rc != 0
 
-- name: Update host address
+- name: Update host address # noqa: no-changed-when
   when: cluster_url.stdout != "https://api." + domain + ":6443"
   ansible.builtin.command: oc config set clusters.{{ cluster_name.stdout }}.server "{{ 'https://api.' + domain + ':6443' }}"
 

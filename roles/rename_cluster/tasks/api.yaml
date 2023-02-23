@@ -40,7 +40,7 @@
       register: k8s_result
       until: k8s_result is not failed
 
-    - name: Update certificate authority in kubeconfig # noqa: no-handler
+    - name: Update certificate authority in kubeconfig # noqa: no-changed-when
       when: cert_secret.changed
       ansible.builtin.command: oc config set clusters.{{ cluster_name.stdout }}.certificate-authority-data "{{ certificate.certificate | b64encode }}"
 
