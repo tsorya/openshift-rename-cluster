@@ -107,7 +107,9 @@
         api_version: route.openshift.io/v1
         kind: Route
       register: routes
-      until: (routes is not failed) and (routes.resources | length | int > 0)
+      until:
+        - routes is not failed
+        - routes.resources | length | int > 0
       retries: 60
       delay: 20
 
