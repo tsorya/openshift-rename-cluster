@@ -116,7 +116,10 @@
       loop: "{{ routes.resources }}"
       loop_control:
         label: "{{ item.metadata.name }}"
-      when: item['metadata']['namespace'].startswith("openshift-")
+      when:
+        - item['metadata']['namespace'].startswith("openshift-")
+        - item['metadata']['namespace'] != "openshift-authentication"
+        - item['metadata']['namespace'] != "openshift-console"
       kubernetes.core.k8s:
         definition:
           apiVersion: route.openshift.io/v1
