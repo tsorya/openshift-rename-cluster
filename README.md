@@ -1,5 +1,7 @@
 # Usage
-The playbook will update your kubeconfig with the new cluster name. It will also update the kubeconfig with the new certificate authority data.
+This playbook will change the domain alias of a cluster. This includes the API and Ingress.
+
+The playbook will also update your kubeconfig with the new cluster name, and update the kubeconfig with the new certificate authority data.
 
 ```
 export KUBECONFIG=~/path/to/kubeconfig
