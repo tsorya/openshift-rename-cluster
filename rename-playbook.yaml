@@ -1,5 +1,6 @@
 - name: Rename cluster
   hosts: localhost
+  connect: local
   gather_facts: false
   roles:
     - {role: 'rename_cluster', tags: 'rename_cluster'}
